@@ -90,7 +90,7 @@ public class Detected : Decision // question node // have been detected?
             int x = 0;
             for (int j = 0; j < rays.Length; j++)
             {
-                rays[j] = new Ray(guards[i].position, new Vector3(guards[i].forward.x - (3 + x), guards[i].forward.y, guards[i].forward.z));
+                rays[j] = new Ray(guards[i].position, new Vector3(guards[i].forward.x, guards[i].forward.y, guards[i].forward.z - (3 + x)));
                 if (Physics.Raycast(rays[j], out RaycastHit hit, 3) && hit.transform.tag == "Thief")
                 {
                     spotted = true;

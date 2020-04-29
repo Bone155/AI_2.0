@@ -48,7 +48,7 @@ public class AIGuard : MonoBehaviour
 
     void OnCollisionEnter(Collision other)
     {
-        if (other.gameObject.CompareTag("Thief"))
+        if (other.gameObject == agent.target)
         {
             Destroy(other.gameObject);
             panel.SetActive(true);
@@ -65,7 +65,7 @@ public class Discovered : Decision // question node // discovered thief
     Agent agent;
     Decision discovered;
     Decision notDiscovered;
-
+    bool chase = false;
     public Discovered() { }
 
     public Discovered(Agent agent, Decision discoveredDecision, Decision notdiscoveredDecision)
@@ -78,6 +78,8 @@ public class Discovered : Decision // question node // discovered thief
     public Decision makeDecision()
     {
         if (thiefInView(agent))
+            chase = true;
+        if (chase)
         {
             return discovered;
         }
@@ -89,15 +91,15 @@ public class Discovered : Decision // question node // discovered thief
 
     bool thiefInView(Agent agent)
     {
-        Ray[] rays = new Ray[7];
+        Ray ray;
         int x = 0;
         bool line = false;
-        for(int i = 0; i < rays.Length; i++)
+        for(int i = 0; i < 7; i++)
         {
-            rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
-            if (Physics.Raycast(rays[i], out RaycastHit hit, 3) && hit.transform.tag == "Thief")
+            ray = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x, agent.transform.forward.y, agent.transform.forward.z + (3 - x)));
+            if (Physics.Raycast(ray, out RaycastHit hit, 10) && hit.transform.tag == "Thief")
             {
-                Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
+                Debug.DrawLine(ray.origin, agent.target.transform.position, Color.cyan);
                 line = true;
             }
             else
@@ -136,15 +138,15 @@ public class thiefCaught : Decision // question node // caught him?
 
     bool thiefInView(Agent agent)
     {
-        Ray[] rays = new Ray[7];
+        Ray ray;
         int x = 0;
         bool line = false;
-        for (int i = 0; i < rays.Length; i++)
+        for (int i = 0; i < 7; i++)
         {
-            rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
-            if (Physics.Raycast(rays[i], out RaycastHit hit, 3) && hit.transform.tag == "Thief")
+            ray = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x, agent.transform.forward.y, agent.transform.forward.z + (3 - x)));
+            if (Physics.Raycast(ray, out RaycastHit hit, 10) && hit.transform.tag == "Thief")
             {
-                Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
+                Debug.DrawLine(ray.origin, agent.target.transform.position, Color.cyan);
                 line = true;
             }
             else
@@ -168,8 +170,6 @@ public class seekTarget : Decision // answer node // seeking theif
     public Decision makeDecision()
     {
         agent.navAgent.SetDestination(agent.target.transform.position);
-        agent.navAgent.speed *= 1.5f;
-        agent.navAgent.acceleration *= 2;
         return null;
     }
 
