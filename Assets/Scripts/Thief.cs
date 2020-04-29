@@ -5,20 +5,18 @@ using UnityEngine.AI;
 
 public class Thief : MonoBehaviour
 {
-    public NavMeshAgent agent;
+    public Agent agent;
     public List<Transform> guards;
-    public List<Transform> targets;
     public GameObject panel;
     Decision root;
-    bool caught = false;
     // Start is called before the first frame update
     void Start()
     {
         panel.SetActive(false);
         root = new Detected(agent, guards,
-                new Caught(agent, caught, //yes
+                new Caught(agent, //yes
                     new Busted(agent), //yes
-                    new Avoid(agent, caught)), //no
+                    new Avoid(agent)), //no
                 new ThiefMovement( //no
                     new ThiefExitPath(agent), //yes
                     new ThiefMove(agent))); //no
@@ -43,12 +41,12 @@ public class Thief : MonoBehaviour
         }
         if (other.gameObject.CompareTag("Security Guard"))
         {
-            caught = true;
+            agent.caught = true;
         }
         if (other.gameObject.CompareTag("Exit"))
         {
             panel.SetActive(true);
-            agent.speed = 0;
+            agent.navAgent.speed = 0;
         }
     }
 
@@ -56,14 +54,14 @@ public class Thief : MonoBehaviour
 
 public class Detected : Decision // question node // have been detected?
 {
-    NavMeshAgent agent;
+    Agent agent;
     List<Transform> guards;
     Decision detected;
     Decision notDetected;
 
     public Detected() { }
 
-    public Detected(NavMeshAgent agent, List<Transform> guards, Decision detectedDecision, Decision notDetectedDecision)
+    public Detected(Agent agent, List<Transform> guards, Decision detectedDecision, Decision notDetectedDecision)
     {
         this.agent = agent;
         this.guards = guards;
@@ -83,15 +81,24 @@ public class Detected : Decision // question node // have been detected?
         }
     }
 
-    bool inView(NavMeshAgent agent, List<Transform> guards)
+    bool inView(Agent agent, List<Transform> guards)
     {
         bool spotted = false;
         Ray ray;
         for(int i = 0; i < guards.Count; i++)
         {
             ray = new Ray(guards[i].position, guards[i].forward);
-            if ((agent.transform.position.x > guards[i].forward.x - 2 || agent.transform.position.x < guards[i].forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
-                spotted = true;
+            if (agent.transform.position.x > guards[i].forward.x - 2 && agent.transform.position.x < guards[i].forward.x + 2)
+            {
+                if(Physics.Raycast(ray, out RaycastHit hit, 3))
+                {
+                    if (hit.collider.gameObject.CompareTag("Security Guard"))
+                    {
+                        spotted = true;
+                    }
+                }
+                
+            }
         }
         return spotted;
     }
@@ -99,24 +106,22 @@ public class Detected : Decision // question node // have been detected?
 
 public class Caught : Decision // question node // have been caught?
 {
-    NavMeshAgent agent;
-    bool caught;
+    Agent agent;
     Decision busted;
     Decision avoided;
 
     public Caught() { }
 
-    public Caught(NavMeshAgent agent, bool caught, Decision bustedDecision, Decision avoidedDecision)
+    public Caught(Agent agent, Decision bustedDecision, Decision avoidedDecision)
     {
         this.agent = agent;
-        this.caught = caught;
         busted = bustedDecision;
         avoided = avoidedDecision;
     }
 
     public Decision makeDecision()
     {
-        if (caught)
+        if (agent.caught)
         {
             return busted;
         }
@@ -130,11 +135,11 @@ public class Caught : Decision // question node // have been caught?
 
 public class Busted : Decision // answer node // got busted!
 {
-    NavMeshAgent agent;
+    Agent agent;
 
     public Busted() { }
 
-    public Busted(NavMeshAgent agent)
+    public Busted(Agent agent)
     {
         this.agent = agent;
     }
@@ -142,28 +147,26 @@ public class Busted : Decision // answer node // got busted!
     public Decision makeDecision()
     {
         //Game over
-        agent.speed = 0;
+        agent.navAgent.speed = 0;
         return null;
     }
 }
 
 public class Avoid : Decision // answer node // avoid guards
 {
-    NavMeshAgent agent;
-    bool caught;
+    Agent agent;
 
     public Avoid() { }
 
-    public Avoid(NavMeshAgent agent, bool caught)
+    public Avoid(Agent agent)
     {
         this.agent = agent;
-        this.caught = caught;
     }
 
     public Decision makeDecision()
     {
-        agent.speed *= 2;
-        caught = false;
+        agent.navAgent.speed *= 2;
+        agent.caught = false;
         return null;
     }
 }
@@ -197,37 +200,37 @@ public class ThiefMovement : Decision // question node // heist complete?
 
 public class ThiefExitPath : Decision // answer node // set exit path
 {
-    NavMeshAgent agent;
+    Agent agent;
 
     public ThiefExitPath() { }
 
-    public ThiefExitPath(NavMeshAgent agent)
+    public ThiefExitPath(Agent agent)
     {
         this.agent = agent;
     }
 
     public Decision makeDecision()
     {
-        agent.SetDestination(GameObject.FindGameObjectWithTag("Exit").transform.position);
+        agent.navAgent.SetDestination(GameObject.FindGameObjectWithTag("Exit").transform.position);
         return null;
     }
 }
 
 public class ThiefMove : Decision // answer node // seek a target
 {
-    NavMeshAgent agent;
+    Agent agent;
 
     public ThiefMove() { }
 
-    public ThiefMove(NavMeshAgent agent)
+    public ThiefMove(Agent agent)
     {
         this.agent = agent;
     }
 
     public Decision makeDecision()
     {
-        agent.speed = 2.24f;
-        agent.SetDestination(GameObject.FindGameObjectWithTag("Diamond").transform.position);
+        agent.navAgent.speed = 2.24f;
+        agent.navAgent.SetDestination(GameObject.FindGameObjectWithTag("Diamond").transform.position);
         return null;
     }
 

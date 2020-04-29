@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\AIGuard.cs" />
+    <Compile Include="Assets\Scripts\Agent.cs" />
     <Compile Include="Assets\Scripts\Move.cs" />
     <Compile Include="Assets\Scripts\Thief.cs" />
     <Reference Include="Unity.Timeline.Editor">
