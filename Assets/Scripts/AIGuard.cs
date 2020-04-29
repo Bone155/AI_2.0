@@ -89,7 +89,7 @@ public class Discovered : Decision // question node // discovered thief
 
     bool thiefInView(Agent agent)
     {
-        Ray[] rays = new Ray[5];
+        Ray[] rays = new Ray[7];
         int x = 0;
         bool line = false;
         for(int i = 0; i < rays.Length; i++)
@@ -99,9 +99,9 @@ public class Discovered : Decision // question node // discovered thief
                 rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
                 if (Physics.Raycast(rays[i], out RaycastHit hit, 3))
                 {
-                    Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
                     if (hit.collider.gameObject.CompareTag("Thief"))
                     {
+                        Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
                         line = true;
                     }
                 }
@@ -142,7 +142,7 @@ public class thiefCaught : Decision // question node // caught him?
 
     bool thiefInView(Agent agent)
     {
-        Ray[] rays = new Ray[5];
+        Ray[] rays = new Ray[7];
         int x = 0;
         bool line = false;
         for (int i = 0; i < rays.Length; i++)
