@@ -357,6 +357,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 124730697}
+  waypoints:
+  - {fileID: 733011361}
+  - {fileID: 1412357242}
+  - {fileID: 1386374805}
+  - {fileID: 214404748}
+  - {fileID: 1114238805}
+  - {fileID: 564006561}
+  - {fileID: 1532363133}
   target: {fileID: 396034896}
   panel: {fileID: 933946217}
 --- !u!54 &124730703

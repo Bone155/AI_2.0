@@ -11,6 +11,7 @@ public interface Decision
 public class AIGuard : MonoBehaviour
 {
     public NavMeshAgent agent;
+    public GameObject[] waypoints;
     public Transform target;
     public Decision root;
     public GameObject panel;
@@ -19,27 +20,14 @@ public class AIGuard : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GameObject wayTarget = new GameObject();
-        GameObject[] waypoints = GameObject.FindGameObjectsWithTag("Waypoint");
-        float dst = Vector3.Distance(agent.transform.position, waypoints[0].transform.position);
-        foreach (GameObject o in waypoints)
-        {
-            float tmp = Vector3.Distance(agent.transform.position, o.transform.position);
-            if (tmp < dst)
-            {
-                dst = tmp;
-                wayTarget = o;
-            }
-        }
-        agent.SetDestination(wayTarget.transform.position);
         panel.SetActive(false);
         root = new Discovered(agent, target,
                 new thiefCaught(agent, target, //yes
-                    new nextWayPoint(agent, atWaypoint, idx), //no
+                    new closestWaypoint(agent, waypoints, idx), //no
                     new seekTarget(agent, target)), //yes
                 new Waypoint(agent, atWaypoint, //no
-                    new seekWayPoint(agent, idx), //no
-                    new nextWayPoint(agent, atWaypoint, idx))); //yes
+                    new seekWayPoint(agent, waypoints, idx), //no
+                    new nextWayPoint(agent, waypoints, atWaypoint, idx))); //yes
     }
 
     // Update is called once per frame
@@ -55,12 +43,12 @@ public class AIGuard : MonoBehaviour
 
     void OnCollisionEnter(Collision other)
     {
-        if (other.gameObject.CompareTag("Thief"))
+        if (other.gameObject.CompareTag("Thief") && other.gameObject != null)
         {
             Destroy(other.gameObject);
             panel.SetActive(true);
         }
-        if (other.gameObject.CompareTag("Waypoint"))
+        if (other.gameObject == waypoints[idx])
         {
             atWaypoint = true;
         }
@@ -99,7 +87,7 @@ public class Discovered : Decision // question node // discovered thief
     bool thiefInView(NavMeshAgent agent)
     {
         Ray ray = new Ray(agent.transform.position, agent.transform.forward);
-        if ((target.position.x > agent.transform.forward.x - 2 || target.position.x < agent.transform.forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
+        if ((target.position.x > agent.transform.forward.x - 3 || target.position.x < agent.transform.forward.x + 3) && Physics.Raycast(ray, out RaycastHit hit, 4))
             return true;
         else
             return false;
@@ -112,7 +100,6 @@ public class thiefCaught : Decision // question node // caught him?
     Transform target;
     Decision patrol;
     Decision seek;
-    float sec = 0;
     public thiefCaught() { }
 
     public thiefCaught(NavMeshAgent agent, Transform target, Decision patrolDecision, Decision seekDecision)
@@ -125,11 +112,12 @@ public class thiefCaught : Decision // question node // caught him?
 
     public Decision makeDecision()
     {
-        if (!thiefInView(agent))
-            sec += Time.deltaTime;
-        else
-            sec = 0;
-        if (sec < 5)
+        bool thief = false;
+        if (thiefInView(agent))
+        {
+            thief = true;
+        }
+        if (thief)
         {
             return seek;
         }
@@ -143,7 +131,7 @@ public class thiefCaught : Decision // question node // caught him?
     bool thiefInView(NavMeshAgent agent)
     {
         Ray ray = new Ray(agent.transform.position, agent.transform.forward);
-        if ((target.position.x > agent.transform.forward.x - 2 || target.position.x < agent.transform.forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
+        if ((target.position.x > agent.transform.forward.x - 3 || target.position.x < agent.transform.forward.x + 3) && Physics.Raycast(ray, out RaycastHit hit, 4))
             return true;
         else
             return false;
@@ -206,19 +194,21 @@ public class Waypoint : Decision //question node // reached waypoint?
 public class seekWayPoint : Decision //answer node // move towards waypoint
 {
     NavMeshAgent agent;
+    GameObject[] waypoints;
     int idx;
 
     public seekWayPoint() { }
 
-    public seekWayPoint(NavMeshAgent agent, int idx)
+    public seekWayPoint(NavMeshAgent agent, GameObject[] waypoints, int idx)
     {
         this.agent = agent;
+        this.waypoints = waypoints;
         this.idx = idx;
     }
 
     public Decision makeDecision()
     {
-        agent.SetDestination(GameObject.FindGameObjectWithTag("Waypoint").transform.position);
+        agent.SetDestination(waypoints[idx].transform.position);
         return null;
     }
 }
@@ -226,24 +216,61 @@ public class seekWayPoint : Decision //answer node // move towards waypoint
 public class nextWayPoint : Decision //answer node // get new waypoint
 {
     NavMeshAgent agent;
+    GameObject[] waypoints;
     bool atWay;
     int idx;
 
     public nextWayPoint() { }
 
-    public nextWayPoint(NavMeshAgent agent, bool atWay, int idx)
+    public nextWayPoint(NavMeshAgent agent, GameObject[] waypoints, bool atWay, int idx)
     {
         this.agent = agent;
         this.atWay = atWay;
         this.idx = idx;
+        this.waypoints = waypoints;
     }
 
     public Decision makeDecision()
     {
-        if (idx >= GameObject.FindGameObjectsWithTag("Waypoint").Length)
+        if (idx >= waypoints.Length)
             idx = 0;
         atWay = false;
         idx++;
+        return null;
+    }
+}
+
+public class closestWaypoint : Decision //answer node // get closest waypoint
+{
+    NavMeshAgent agent;
+    GameObject[] waypoints;
+    int idx;
+
+    public closestWaypoint() { }
+
+    public closestWaypoint(NavMeshAgent agent, GameObject[] waypoints, int idx)
+    {
+        this.agent = agent;
+        this.idx = idx;
+        this.waypoints = waypoints;
+    }
+
+    public Decision makeDecision()
+    {
+        GameObject wayTarget = new GameObject();
+        float dst = Vector3.Distance(agent.transform.position, waypoints[0].transform.position);
+        int count = 0;
+        foreach (GameObject o in waypoints)
+        {
+            float tmp = Vector3.Distance(agent.transform.position, o.transform.position);
+            if (tmp < dst)
+            {
+                wayTarget = o;
+                idx = count;
+            }
+            count++;
+        }
+        agent.SetDestination(wayTarget.transform.position);
         return null;
     }
 }
