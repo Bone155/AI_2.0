@@ -254,7 +254,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 4.18
+  m_Speed: 2.97
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -1289,7 +1289,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.59
-  m_Speed: 2.24
+  m_Speed: 3.51
   m_Acceleration: 7.45
   avoidancePriority: 50
   m_AngularSpeed: 120

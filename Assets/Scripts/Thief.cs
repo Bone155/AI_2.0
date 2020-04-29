@@ -84,21 +84,23 @@ public class Detected : Decision // question node // have been detected?
     bool inView(Agent agent, List<Transform> guards)
     {
         bool spotted = false;
-        Ray ray;
+        Ray[] rays = new Ray[7];
         for(int i = 0; i < guards.Count; i++)
         {
-            ray = new Ray(guards[i].position, guards[i].forward);
-            if (agent.transform.position.x > guards[i].forward.x - 2 && agent.transform.position.x < guards[i].forward.x + 2)
+            int x = 0;
+            for (int j = 0; j < rays.Length; j++)
             {
-                if(Physics.Raycast(ray, out RaycastHit hit, 3))
+                rays[j] = new Ray(guards[i].position, new Vector3(guards[i].forward.x - (3 + x), guards[i].forward.y, guards[i].forward.z));
+                if (Physics.Raycast(rays[j], out RaycastHit hit, 3) && hit.transform.tag == "Thief")
                 {
-                    if (hit.collider.gameObject.CompareTag("Security Guard"))
-                    {
-                        spotted = true;
-                    }
+                    spotted = true;
                 }
+                else
+                    x++;
                 
             }
+            
+                
         }
         return spotted;
     }
@@ -229,7 +231,7 @@ public class ThiefMove : Decision // answer node // seek a target
 
     public Decision makeDecision()
     {
-        agent.navAgent.speed = 2.24f;
+        agent.navAgent.speed = 3.51f;
         agent.navAgent.SetDestination(GameObject.FindGameObjectWithTag("Diamond").transform.position);
         return null;
     }

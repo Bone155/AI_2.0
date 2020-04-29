@@ -94,20 +94,14 @@ public class Discovered : Decision // question node // discovered thief
         bool line = false;
         for(int i = 0; i < rays.Length; i++)
         {
-            if ((agent.target.transform.position.x > agent.transform.forward.x - 3 && agent.target.transform.position.x < agent.transform.forward.x + 3))
+            rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
+            if (Physics.Raycast(rays[i], out RaycastHit hit, 3) && hit.transform.tag == "Thief")
             {
-                rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
-                if (Physics.Raycast(rays[i], out RaycastHit hit, 3))
-                {
-                    if (hit.collider.gameObject.CompareTag("Thief"))
-                    {
-                        Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
-                        line = true;
-                    }
-                }
-                else
-                    x++;
+                Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
+                line = true;
             }
+            else
+                x++;
         }
         return line;
     }
@@ -147,19 +141,14 @@ public class thiefCaught : Decision // question node // caught him?
         bool line = false;
         for (int i = 0; i < rays.Length; i++)
         {
-            if ((agent.target.transform.position.x > agent.transform.forward.x - 3 && agent.target.transform.position.x < agent.transform.forward.x + 3))
+            rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
+            if (Physics.Raycast(rays[i], out RaycastHit hit, 3) && hit.transform.tag == "Thief")
             {
-                rays[i] = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x - (3 + x), agent.transform.forward.y, agent.transform.forward.z));
-                if (Physics.Raycast(rays[i], out RaycastHit hit, 3))
-                {
-                    if (hit.collider.gameObject.CompareTag("Thief"))
-                    {
-                        line = true;
-                    }
-                }
-                else
-                    x++;
+                Debug.DrawLine(rays[i].origin, agent.target.transform.position, Color.cyan);
+                line = true;
             }
+            else
+                x++;
         }
         return line;
     }
@@ -179,7 +168,8 @@ public class seekTarget : Decision // answer node // seeking theif
     public Decision makeDecision()
     {
         agent.navAgent.SetDestination(agent.target.transform.position);
-        agent.navAgent.speed *= 2.5f;
+        agent.navAgent.speed *= 1.5f;
+        agent.navAgent.acceleration *= 2;
         return null;
     }
 
@@ -226,6 +216,7 @@ public class seekWayPoint : Decision //answer node // move towards waypoint
 
     public Decision makeDecision()
     {
+        agent.navAgent.speed = 3.21f;
         agent.navAgent.SetDestination(agent.waypoints[agent.idx].transform.position);
         return null;
     }
