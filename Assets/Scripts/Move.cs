@@ -6,16 +6,16 @@ using UnityEngine.AI;
 public class Move : MonoBehaviour
 {
     public NavMeshAgent agent;
-    public GameObject target;
+    public Transform target;
     // Start is called before the first frame update
     void Start()
     {
-        agent.destination = target.transform.position;
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        agent.destination = target.position;
     }
 }

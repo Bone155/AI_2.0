@@ -9,6 +9,8 @@ TagManager:
   - Security Guard
   - Grid
   - Waypoint
+  - Thief
+  - Exit
   layers:
   - Default
   - TransparentFX

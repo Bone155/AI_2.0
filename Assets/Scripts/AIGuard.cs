@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public interface Decision
 {
@@ -9,21 +10,36 @@ public interface Decision
 
 public class AIGuard : MonoBehaviour
 {
-    public Agent agent;
-    public List<Transform> waypoints;
+    public NavMeshAgent agent;
+    public Transform target;
     public Decision root;
+    public GameObject panel;
+    bool atWaypoint = false;
+    int idx = 0;
     // Start is called before the first frame update
     void Start()
     {
-        root = new Discovered(agent, 
-                new thiefCaught(agent, //yes
-                    new newWayPoint(agent), //no
-                    new seekTarget(agent)), //yes
-                new Waypoint(agent, //no
-                    new newWayPoint(agent), //yes
-                    new HavePath(agent, //no
-                        new seekWayPoint(agent), //yes
-                        new newWayPoint(agent)))); //no
+        GameObject wayTarget = new GameObject();
+        GameObject[] waypoints = GameObject.FindGameObjectsWithTag("Waypoint");
+        float dst = Vector3.Distance(agent.transform.position, waypoints[0].transform.position);
+        foreach (GameObject o in waypoints)
+        {
+            float tmp = Vector3.Distance(agent.transform.position, o.transform.position);
+            if (tmp < dst)
+            {
+                dst = tmp;
+                wayTarget = o;
+            }
+        }
+        agent.SetDestination(wayTarget.transform.position);
+        panel.SetActive(false);
+        root = new Discovered(agent, target,
+                new thiefCaught(agent, target, //yes
+                    new nextWayPoint(agent, atWaypoint, idx), //no
+                    new seekTarget(agent, target)), //yes
+                new Waypoint(agent, atWaypoint, //no
+                    new seekWayPoint(agent, idx), //no
+                    new nextWayPoint(agent, atWaypoint, idx))); //yes
     }
 
     // Update is called once per frame
@@ -37,19 +53,33 @@ public class AIGuard : MonoBehaviour
 
     }
 
+    void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.CompareTag("Thief"))
+        {
+            Destroy(other.gameObject);
+            panel.SetActive(true);
+        }
+        if (other.gameObject.CompareTag("Waypoint"))
+        {
+            atWaypoint = true;
+        }
+    }
 }
 
 public class Discovered : Decision // question node // discovered thief
 {
-    Agent agent;
+    NavMeshAgent agent;
+    Transform target;
     Decision discovered;
     Decision notDiscovered;
 
     public Discovered() { }
 
-    public Discovered(Agent agent, Decision discoveredDecision, Decision notdiscoveredDecision)
+    public Discovered(NavMeshAgent agent, Transform target, Decision discoveredDecision, Decision notdiscoveredDecision)
     {
         this.agent = agent;
+        this.target = target;
         discovered = discoveredDecision;
         notDiscovered = notdiscoveredDecision;
     }
@@ -66,10 +96,10 @@ public class Discovered : Decision // question node // discovered thief
         }
     }
 
-    bool thiefInView(Agent agent)
+    bool thiefInView(NavMeshAgent agent)
     {
         Ray ray = new Ray(agent.transform.position, agent.transform.forward);
-        if ((agent.target.position.x > agent.transform.forward.x - 2 || agent.target.position.x < agent.transform.forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
+        if ((target.position.x > agent.transform.forward.x - 2 || target.position.x < agent.transform.forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
             return true;
         else
             return false;
@@ -78,15 +108,17 @@ public class Discovered : Decision // question node // discovered thief
 
 public class thiefCaught : Decision // question node // caught him?
 {
-    Agent agent;
+    NavMeshAgent agent;
+    Transform target;
     Decision patrol;
     Decision seek;
     float sec = 0;
     public thiefCaught() { }
 
-    public thiefCaught(Agent agent, Decision patrolDecision, Decision seekDecision)
+    public thiefCaught(NavMeshAgent agent, Transform target, Decision patrolDecision, Decision seekDecision)
     {
         this.agent = agent;
+        this.target = target;
         patrol = patrolDecision;
         seek = seekDecision;
     }
@@ -108,10 +140,10 @@ public class thiefCaught : Decision // question node // caught him?
 
     }
 
-    bool thiefInView(Agent agent)
+    bool thiefInView(NavMeshAgent agent)
     {
         Ray ray = new Ray(agent.transform.position, agent.transform.forward);
-        if ((agent.target.position.x > agent.transform.forward.x - 2 || agent.target.position.x < agent.transform.forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
+        if ((target.position.x > agent.transform.forward.x - 2 || target.position.x < agent.transform.forward.x + 2) && Physics.Raycast(ray, out RaycastHit hit, 1))
             return true;
         else
             return false;
@@ -120,18 +152,20 @@ public class thiefCaught : Decision // question node // caught him?
 
 public class seekTarget : Decision // answer node // seeking theif
 {
-    Agent agent;
+    NavMeshAgent agent;
+    Transform target;
 
     public seekTarget() { }
 
-    public seekTarget(Agent agent)
+    public seekTarget(NavMeshAgent agent, Transform target)
     {
         this.agent = agent;
+        this.target = target;
     }
 
     public Decision makeDecision()
     {
-        agent.navAgent.destination = agent.target.position;
+        agent.SetDestination(target.position);
         return null;
     }
 
@@ -139,22 +173,24 @@ public class seekTarget : Decision // answer node // seeking theif
 
 public class Waypoint : Decision //question node // reached waypoint?
 {
-    Agent agent;
+    NavMeshAgent agent;
+    bool atWay;
     Decision closeEnough;
     Decision tooFar;
 
     public Waypoint() { }
 
-    public Waypoint(Agent agent, Decision closeEnoughDecision, Decision tooFarDecision)
+    public Waypoint(NavMeshAgent agent, bool atWay, Decision tooFarDecision, Decision closeEnoughDecision)
     {
         this.agent = agent;
+        this.atWay = atWay;
         closeEnough = closeEnoughDecision;
         tooFar = tooFarDecision;
     }
 
     public Decision makeDecision()
     {
-        if ()
+        if (atWay)
         {
             return closeEnough;
         }
@@ -169,67 +205,45 @@ public class Waypoint : Decision //question node // reached waypoint?
 
 public class seekWayPoint : Decision //answer node // move towards waypoint
 {
-    Agent agent;
+    NavMeshAgent agent;
+    int idx;
+
     public seekWayPoint() { }
 
-    public seekWayPoint(Agent agent)
+    public seekWayPoint(NavMeshAgent agent, int idx)
     {
         this.agent = agent;
+        this.idx = idx;
     }
 
     public Decision makeDecision()
     {
-        if (agent.idx >= agent.waypoints.Count)
-            agent.idx = 0;
-        agent.navAgent.destination = agent.waypoints[agent.idx].position;
-        agent.idx++;
+        agent.SetDestination(GameObject.FindGameObjectWithTag("Waypoint").transform.position);
         return null;
     }
 }
 
-public class newWayPoint : Decision //answer node // get new waypoint
+public class nextWayPoint : Decision //answer node // get new waypoint
 {
-    Agent agent;
+    NavMeshAgent agent;
+    bool atWay;
+    int idx;
 
-    public newWayPoint() { }
+    public nextWayPoint() { }
 
-    public newWayPoint(Agent agent)
+    public nextWayPoint(NavMeshAgent agent, bool atWay, int idx)
     {
         this.agent = agent;
+        this.atWay = atWay;
+        this.idx = idx;
     }
 
     public Decision makeDecision()
     {
-        agent.path = agent.dj.calculatePath(agent.transform, agent.waypoints[agent.idx]);
+        if (idx >= GameObject.FindGameObjectsWithTag("Waypoint").Length)
+            idx = 0;
+        atWay = false;
+        idx++;
         return null;
-    }
-}
-
-public class HavePath : Decision // question node // does the agent have a path
-{
-    Agent agent;
-    Decision yes;
-    Decision no;
-
-    public HavePath() { }
-
-    public HavePath(Agent agent, Decision yesDecision, Decision noDecision)
-    {
-        this.agent = agent;
-        yes = yesDecision;
-        no = noDecision;
-    }
-
-    public Decision makeDecision()
-    {
-        if (agent.path.Count <= 0)
-        {
-            return no;
-        }
-        else
-        {
-            return yes;
-        }
-
     }
 }
