@@ -72,6 +72,8 @@ public class Detected : Decision // question node // have been detected?
     public Decision makeDecision()
     {
         if (inView(agent, guards))
+            agent.chase = true;
+        if (agent.chase)
         {
             return detected;
         }
@@ -167,7 +169,7 @@ public class Avoid : Decision // answer node // avoid guards
 
     public Decision makeDecision()
     {
-        agent.navAgent.speed *= 2;
+        agent.navAgent.speed += 0.05f;
         agent.caught = false;
         return null;
     }

@@ -16,7 +16,7 @@ public class AIGuard : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        float dst = Vector3.Distance(agent.transform.position, agent.waypoints[0].transform.position);
+        float dst = Vector3.Distance(agent.transform.position, agent.waypoints[agent.idx].transform.position);
         for (int i = 0; i < agent.waypoints.Length; i++)
         {
             float tmp = Vector3.Distance(agent.transform.position, agent.waypoints[i].transform.position);
@@ -48,7 +48,7 @@ public class AIGuard : MonoBehaviour
 
     void OnCollisionEnter(Collision other)
     {
-        if (other.gameObject == agent.target)
+        if (other.gameObject.CompareTag("Thief"))
         {
             Destroy(other.gameObject);
             panel.SetActive(true);
