@@ -399,6 +399,7 @@ MonoBehaviour:
   target: {fileID: 396034891}
   atWaypoint: 0
   caught: 0
+  chase: 0
   idx: 0
 --- !u!1 &135162266
 GameObject:
@@ -1397,6 +1398,7 @@ MonoBehaviour:
   target: {fileID: 0}
   atWaypoint: 0
   caught: 0
+  chase: 0
   idx: 0
 --- !u!54 &396034898
 Rigidbody:
@@ -1413,7 +1415,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 4
-  m_CollisionDetection: 0
+  m_CollisionDetection: 2
 --- !u!114 &396034899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3123,6 +3125,7 @@ MonoBehaviour:
   target: {fileID: 396034891}
   atWaypoint: 0
   caught: 0
+  chase: 0
   idx: 0
 --- !u!136 &1109799842
 CapsuleCollider:
@@ -3867,6 +3870,7 @@ MonoBehaviour:
   target: {fileID: 396034891}
   atWaypoint: 0
   caught: 0
+  chase: 0
   idx: 0
 --- !u!136 &1285440343
 CapsuleCollider:

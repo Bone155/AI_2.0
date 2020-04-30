@@ -65,7 +65,6 @@ public class Discovered : Decision // question node // discovered thief
     Agent agent;
     Decision discovered;
     Decision notDiscovered;
-    bool chase = false;
     public Discovered() { }
 
     public Discovered(Agent agent, Decision discoveredDecision, Decision notdiscoveredDecision)
@@ -78,8 +77,8 @@ public class Discovered : Decision // question node // discovered thief
     public Decision makeDecision()
     {
         if (thiefInView(agent))
-            chase = true;
-        if (chase)
+            agent.chase = true;
+        if (agent.chase)
         {
             return discovered;
         }
@@ -125,7 +124,7 @@ public class thiefCaught : Decision // question node // caught him?
 
     public Decision makeDecision()
     {
-        if (thiefInView(agent))
+        if (agent.chase)
         {
             return seek;
         }
@@ -136,24 +135,7 @@ public class thiefCaught : Decision // question node // caught him?
 
     }
 
-    bool thiefInView(Agent agent)
-    {
-        Ray ray;
-        int x = 0;
-        bool line = false;
-        for (int i = 0; i < 7; i++)
-        {
-            ray = new Ray(agent.transform.position, new Vector3(agent.transform.forward.x, agent.transform.forward.y, agent.transform.forward.z + (3 - x)));
-            if (Physics.Raycast(ray, out RaycastHit hit, 10) && hit.transform.tag == "Thief")
-            {
-                Debug.DrawLine(ray.origin, agent.target.transform.position, Color.cyan);
-                line = true;
-            }
-            else
-                x++;
-        }
-        return line;
-    }
+    
 }
 
 public class seekTarget : Decision // answer node // seeking theif
@@ -170,6 +152,7 @@ public class seekTarget : Decision // answer node // seeking theif
     public Decision makeDecision()
     {
         agent.navAgent.SetDestination(agent.target.transform.position);
+        agent.navAgent.speed = 3.61f;
         return null;
     }
 
